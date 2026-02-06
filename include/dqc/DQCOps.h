@@ -1,8 +1,4 @@
-//===- DQCOps.h - DQC Op Declarations ---*- C++ -*-===//
-//
-// This file declares the operations in the DQC dialect.
-//
-//===------------------------------------------------===//
+// DQC operation declarations
 
 #ifndef DQC_DQCOPS_H
 #define DQC_DQCOPS_H

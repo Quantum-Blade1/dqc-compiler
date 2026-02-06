@@ -1,10 +1,4 @@
-//===- InteractionGraphPass.cpp - Qubit-to-Hypergraph Mapping ---*- C++ -*-===//
-//
-// This file implements the Interaction Graph Pass, which converts a QUIR function
-// into a weighted hypergraph for partitioning using KaHyPar or similar tools.
-//
-// Phase A: Qubit-to-Hypergraph Mapping
-//===------------------------------------------------------------------------===//
+// Phase A: Build hypergraph of qubit interactions for partitioning
 
 #include "mlir/Pass/Pass.h"
 #include "mlir/IR/Walkers.h"
@@ -21,15 +15,13 @@
 
 namespace dqc {
 
-// Forward declaration
-struct HypergraphPartition;
-struct InteractionEdge;
+// Hypergraph structures for partitioning
 
-/// Represents a gate packet: multiple gates sharing a common control qubit
+// Gate packet with shared control qubit
 struct GatePacket {
   int control_qubit_id;
   std::vector<int> target_qubit_ids;
-  int weight;  // Frequency of this packet
+  int weight;
   
   GatePacket(int ctrl) : control_qubit_id(ctrl), weight(0) {}
   
@@ -41,12 +33,12 @@ struct GatePacket {
   }
 };
 
-/// Hypergraph edge representing qubit interactions
+// Edge between interacting qubits
 struct InteractionEdge {
   int source_qubit;
   int target_qubit;
   int weight;
-  int gate_count;  // Number of gates on this edge for gate packing
+  int gate_count;
   
   InteractionEdge(int src, int tgt)
       : source_qubit(src), target_qubit(tgt), weight(1), gate_count(1) {}
@@ -57,12 +49,12 @@ struct InteractionEdge {
   }
 };
 
-/// Represents the hypergraph structure
+// Weighted hypergraph of qubits
 struct WeightedHypergraph {
-  int num_vertices;  // Number of qubits
+  int num_vertices;
   std::map<std::pair<int, int>, InteractionEdge> edges;
   std::map<int, GatePacket> gate_packets;
-  std::map<int, int> qubit_degree;  // Degree of each qubit vertex
+  std::map<int, int> qubit_degree;
   
   WeightedHypergraph(int num_qubits) : num_vertices(num_qubits) {
     for (int i = 0; i < num_qubits; ++i) {
@@ -70,9 +62,9 @@ struct WeightedHypergraph {
     }
   }
   
-  /// Add or update an edge in the hypergraph
+  // Add or update edge weight
   void addEdge(int src, int tgt) {
-    if (src > tgt) std::swap(src, tgt);  // Normalize ordering
+    if (src > tgt) std::swap(src, tgt);
     
     auto key = std::make_pair(src, tgt);
     if (edges.find(key) != edges.end()) {
@@ -86,16 +78,15 @@ struct WeightedHypergraph {
     qubit_degree[tgt]++;
   }
   
-  /// Add a gate packet
+  // Track gate packet
   void addGatePacket(const GatePacket &packet) {
     gate_packets[packet.control_qubit_id] = packet;
   }
   
-  /// Export to simple text format for KaHyPar
+  // Export to HMetis format
   std::string exportToHMetisFormat() const {
     std::stringstream ss;
-    // HMETIS format: numEdges numVertices (optional_params)
-    // Then list edges in vertex-list format
+    // Format: numEdges numVertices, then edge list
     ss << edges.size() << " " << num_vertices << "\n";
     
     for (const auto &[key, edge] : edges) {
@@ -107,11 +98,11 @@ struct WeightedHypergraph {
   }
 };
 
-/// Represents the partitioning result
+// Result of hypergraph partitioning
 struct HypergraphPartition {
-  std::map<int, int> qubit_to_qpu;  // Maps logical qubit ID to physical QPU ID
+  std::map<int, int> qubit_to_qpu;
   int num_qpus;
-  double edge_cut_cost;  // Total e-bit consumption
+  double edge_cut_cost;
   
   HypergraphPartition() : num_qpus(0), edge_cut_cost(0.0) {}
 };
@@ -120,8 +111,7 @@ struct HypergraphPartition {
 
 namespace {
 
-/// Interaction Graph Pass
-/// Converts a QUIR function into a weighted hypergraph for partitioning
+// Convert QUIR circuit to qubit interaction hypergraph
 class InteractionGraphPass
     : public mlir::PassWrapper<InteractionGraphPass,
                                mlir::OperationPass<mlir::func::FuncOp>> {

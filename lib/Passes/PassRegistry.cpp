@@ -1,8 +1,4 @@
-//===- PassRegistry.cpp - DQC Pass Registration ---*- C++ -*-===//
-//
-// This file registers all DQC compiler passes.
-//
-//===----------------------------------------------------------===//
+// Register all DQC compiler passes
 
 #include "dqc/Passes.h"
 #include "mlir/Pass/PassRegistry.h"

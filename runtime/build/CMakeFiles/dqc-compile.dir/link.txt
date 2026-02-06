@@ -1,0 +1,1 @@
+/usr/bin/c++ "CMakeFiles/dqc-compile.dir/tools/dqc-compile.cpp.o" -o dqc-compile 

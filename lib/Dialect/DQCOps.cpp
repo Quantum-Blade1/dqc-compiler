@@ -1,8 +1,4 @@
-//===- DQCOps.cpp - DQC Op Implementations ---*- C++ -*-===//
-//
-// This file implements operations in the DQC dialect.
-//
-//===----------------------------------------------------===//
+// DQC operation implementations
 
 #include "dqc/DQCOps.h"
 #include "dqc/DQCDialect.h"
@@ -14,9 +10,7 @@ using namespace dqc;
 #define GET_OP_CLASSES
 #include "dqc/DQCOps.cpp.inc"
 
-//===------------------------------------------------------===//
-// DQCTeleGateMultiOp: Custom Assembly Format
-//===------------------------------------------------------===//
+// Custom assembly format for telegate_multi operation
 
 ParseResult DQCTeleGateMultiOp::parse(OpAsmParser &parser,
                                        OperationState &result) {

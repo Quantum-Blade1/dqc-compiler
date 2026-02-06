@@ -1,8 +1,4 @@
-//===- DQCDialect.h - DQC Dialect Declaration ---*- C++ -*-===//
-//
-// This file defines the DQC dialect.
-//
-//===------------------------------------------------------===//
+// DQC dialect definition with types and operations
 
 #ifndef DQC_DQCDIALECT_H
 #define DQC_DQCDIALECT_H

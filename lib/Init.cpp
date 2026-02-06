@@ -1,8 +1,4 @@
-//===- Init.cpp - DQC Compiler Initialization ---*- C++ -*-===//
-//
-// This file initializes the DQC compiler library.
-//
-//===------------------------------------------------------===//
+// Initialize DQC compiler and register dialects
 
 #include "dqc/DQCDialect.h"
 #include "dqc/DQCOps.h"

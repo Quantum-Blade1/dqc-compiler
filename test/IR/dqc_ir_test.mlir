@@ -1,22 +1,18 @@
-//===- dqc_ir_test.mlir - DQC Dialect IR Tests ---*- MLIR -*-===//
-//
-// Tests for DQC dialect operations and types
-//
-//===----------------------------------------------------------===//
+// DQC dialect IR tests
 
-// Test: EPR allocation
+// EPR allocation test
 func.func @test_epr_alloc() {
-  // Allocate an entangled pair between QPUs 0 and 1
+  // Allocate entangled pair
   %epr = dqc.epr_alloc 0, 1 : i32, i32 -> !dqc.epr_handle
   return
 }
 
-// Test: TeleGate operation (placeholder - would require QUIR qubits)
+// TeleGate operation test
 func.func @test_telegate() {
   return
 }
 
-// Test: Partition metadata
+// Partition metadata test
 func.func @test_partition_info() {
   return
 }

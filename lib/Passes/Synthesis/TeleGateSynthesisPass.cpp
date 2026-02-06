@@ -1,11 +1,4 @@
-//===- TeleGateSynthesisPass.cpp - TeleGate Synthesis Pass ---*- C++ -*-===//
-//
-// This file implements the TeleGate Synthesis Pass, which replaces inter-QPU
-// CNOT operations with distributed dqc.telegate sequences involving
-// entanglement allocation and teleportation.
-//
-// Phase B: TeleGate Synthesis (Dialect Conversion Pass)
-//===----------------------------------------------------------------------===//
+// Phase B: Replace inter-QPU gates with teleportation operations
 
 #include "dqc/DQCDialect.h"
 #include "dqc/DQCOps.h"
@@ -20,10 +13,7 @@
 
 namespace {
 
-// Forward declaration
-class MappingTable;
-
-/// Table storing qubit-to-QPU assignment from previous partitioning phase
+// Qubit-to-QPU mapping
 class MappingTable {
 private:
   llvm::DenseMap<int, int> qubit_to_qpu;
@@ -37,7 +27,7 @@ public:
     }
     
     for (const auto &entry : partition_attr) {
-      // Parse "qubit_N" -> N
+      // Extract qubit ID from key
       auto key_str = entry.getName().str();
       if (key_str.find("qubit_") == 0) {
         int qubit_id = std::stoi(key_str.substr(6));
@@ -65,12 +55,11 @@ public:
         getQPUAssignment(tgt_qubit, tgt_qpu)) {
       return ctrl_qpu == tgt_qpu;
     }
-    return true;  // Default to local if mapping not found
+    return true;
   }
 };
 
-/// OpConversionPattern for QUIR CNOT operations
-/// Replaces inter-QPU CNOTs with TeleGate sequences
+// Convert QUIR CNOT to TeleGate for distributed QPUs
 class QUIRCNOTToTeleGatePattern : public mlir::OpConversionPattern<mlir::Operation> {
 private:
   MappingTable &mapping_table;
@@ -83,29 +72,19 @@ public:
       mlir::Operation *op, mlir::ArrayRef<mlir::Value> operands,
       mlir::ConversionPatternRewriter &rewriter) const final {
     
-    // This pattern matches operations that look like CNOT
-    // In real implementation, match against quir::CNOTOp
+    // Match CNOT-like operations
     auto op_name = op->getName().getStringRef();
-    if (!op_name.contains("cnot")) {
-      return mlir::failure();
-    }
+    if (!op_name.contains("cnot")) return mlir::failure();
     
-    LLVM_DEBUG(llvm::dbgs() << "Processing potential CNOT operation\n");
+    if (op->getNumOperands() < 2) return mlir::failure();
     
-    // Extract control and target qubit operands
-    if (op->getNumOperands() < 2) {
-      return mlir::failure();
-    }
-    
-    // Simplified: assume first two operands are control and target
     auto control_qubit = operands[0];
     auto target_qubit = operands[1];
     
-    // Extract qubit IDs from SSA value names or attributes
-    // For now, use a placeholder extraction
+    // Extract qubit IDs
     int ctrl_id = 0, tgt_id = 1;
     
-    // Check if this is an inter-QPU gate
+    // Skip local gates
     if (mapping_table.isLocalGate(ctrl_id, tgt_id)) {
       LLVM_DEBUG(llvm::dbgs() << "Gate is local, skipping\n");
       return mlir::failure();
@@ -120,7 +99,7 @@ public:
     mlir::Location loc = op->getLoc();
     mlir::Block *insertion_block = rewriter.getInsertionBlock();
     
-    // Step 1: Create EPR allocation as a generic op (avoid generated op class dependency)
+    // Create EPR allocation
     auto epr_type = dqc::EPRHandleType::get(op->getContext());
     mlir::OperationState eprState(loc, "dqc.epr_alloc");
     eprState.addTypes(epr_type);
@@ -131,8 +110,7 @@ public:
     LLVM_DEBUG(llvm::dbgs() << "Created epr_alloc for QPUs " << ctrl_qpu
                             << " and " << tgt_qpu << "\n");
     
-    // Step 2: Create TeleGate operation
-    // Step 2: Create TeleGate operation (generic creation)
+    // Create TeleGate operation
     mlir::OperationState telegateState(loc, "dqc.telegate");
     // result type mirrors the control qubit type for simplicity
     telegateState.addTypes(control_qubit.getType());
@@ -143,7 +121,7 @@ public:
     
     LLVM_DEBUG(llvm::dbgs() << "Created telegate operation\n");
     
-    // Step 3: Replace original CNOT with TeleGate result
+    // Replace CNOT with TeleGate
     rewriter.replaceOp(op, {telegate_op->getResult(0)});
     
     return mlir::success();

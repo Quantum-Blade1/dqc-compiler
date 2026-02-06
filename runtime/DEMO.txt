@@ -1,0 +1,9 @@
+Example DQC Program (for copy-paste into the CLI):
+
+0: {"op":"APPLY","gate":"H","args":[0]}
+0: {"op":"APPLY","gate":"H","args":[1]}
+0: {"op":"APPLY","gate":"CX","args":[0,1]}
+0: {"op":"MEASURE","qubit":0}
+
+Then type ':done' to finish editing.
+Choose option '2' to run or '3' to debug.

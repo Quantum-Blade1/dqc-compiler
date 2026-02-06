@@ -1,0 +1,4 @@
+0: {"op":"APPLY","gate":"H","args":[0]}
+0: {"op":"APPLY","gate":"CX","args":[0,1]}
+0: {"op":"MEASURE","qubit":0}
+0: {"op":"MEASURE","qubit":1}

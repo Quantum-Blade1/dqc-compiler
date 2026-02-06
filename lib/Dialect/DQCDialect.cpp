@@ -1,8 +1,4 @@
-//===- DQCDialect.cpp - DQC Dialect Implementation ---*- C++ -*-===//
-//
-// This file implements the DQC dialect.
-//
-//===----------------------------------------------------------===//
+// DQC dialect implementation
 
 #include "dqc/DQCDialect.h"
 #include "dqc/DQCOps.h"
@@ -12,9 +8,7 @@
 using namespace mlir;
 using namespace dqc;
 
-//===------------------------------------------------------===//
-// DQC dialect
-//===------------------------------------------------------===//
+// DQC dialect generation
 
 #include "dqc/DQCDialect.cpp.inc"
 
@@ -31,9 +25,7 @@ void DQCDialect::initialize() {
   >();
 }
 
-//===------------------------------------------------------===//
-// Type Definitions
-//===------------------------------------------------------===//
+// Type parsing and printing
 
 Type DQCDialect::parseType(DialectAsmParser &parser) const {
   StringRef keyword;

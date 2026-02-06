@@ -1,0 +1,4 @@
+// placeholder .dqc file for runtime demo
+module {
+  // pretend this is MLIR-based DQC output
+}

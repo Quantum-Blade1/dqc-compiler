@@ -1,10 +1,4 @@
-//===- MPILoweringPass.cpp - DQC to MPI Lowering ---*- C++ -*-===//
-//
-// This file implements the MPI Lowering Pass, which converts the DQC dialect
-// to the MPI dialect for distributed execution simulation.
-//
-// Phase D: MPI Lowering for Execution
-//===--------------------------------------------------------------===//
+// Phase D: Lower DQC to MPI for distributed execution
 
 #include "mlir/Pass/Pass.h"
 #include "mlir/IR/PatternMatch.h"
@@ -17,21 +11,16 @@
 
 namespace {
 
-/// Maps DQC operations to MPI communication patterns
+// Map DQC ops to MPI communication
 class DQCToMPILowering {
 public:
   static mlir::Operation *lowerEPRAlloc(mlir::Operation *op,
                                          mlir::PatternRewriter &rewriter) {
-    // dqc.epr_alloc %src_qpu, %tgt_qpu
-    // =>
-    // mpi.isend(%bell_state, %tgt_qpu)  // Non-blocking send of entangled qubit
-    // mpi.irecv(%target_qpu, ...)       // Non-blocking receive
+    // Convert epr_alloc to MPI send/recv
     
     mlir::Location loc = op->getLoc();
     
-    // Create isend for entanglement distribution
-    // Placeholder: in real implementation, would use MPI dialect
-    // mpi.isend(%bell_state, %tgt_qpu) -> i32  // Request handle
+    // Create MPI isend for entanglement
     
     LLVM_DEBUG(llvm::dbgs() << "Lowering epr_alloc to MPI isend/irecv\n");
     
@@ -40,25 +29,19 @@ public:
   
   static mlir::Operation *lowerTeleGate(mlir::Operation *op,
                                          mlir::PatternRewriter &rewriter) {
-    // dqc.telegate %ctrl, %tgt, %epr
-    // =>
-    // 1. %measurement = quir.measure(%ctrl, %epr_local)
-    // 2. mpi.send(%measurement, %tgt_qpu)
-    // 3. mpi.recv(%correction_bits, %ctrl_qpu)
-    // 4. @tgt_qpu: quir.apply_correction(%tgt, %epr_remote, %correction_bits)
+    // Convert telegate to MPI measure/send/recv sequence
     
     mlir::Location loc = op->getLoc();
     
     LLVM_DEBUG(llvm::dbgs() << "Lowering telegate to MPI send/recv sequence\n");
     
-    // This would involve creating multiple MPI operations
-    // Placeholder for full implementation
+    // Create MPI operations for teleportation
     
     return op;  // Simplified for now
   }
 };
 
-/// MPI Lowering Pass
+// MPI lowering pass
 class MPILoweringPass
     : public mlir::PassWrapper<MPILoweringPass,
                                mlir::OperationPass<mlir::ModuleOp>> {
@@ -83,20 +66,12 @@ public:
                           llvm::cl::init(2)};
 
 private:
-  /// Generate dispatcher to split code by MPI rank
+  // Generate rank dispatcher
   void generateRankDispatcher(mlir::ModuleOp module, int num_ranks) {
     mlir::MLIRContext *ctx = module.getContext();
     mlir::Location loc = module.getLoc();
     
-    // Create wrapper function that calls different code based on MPI rank
-    // Pseudocode:
-    // func @mpi_main() {
-    //   %rank = mpi.comm_rank()
-    //   switch (%rank)
-    //     case 0: call @rank_0_kernel()
-    //     case 1: call @rank_1_kernel()
-    //     ...
-    // }
+    // Wrapper function with rank-based dispatch
     
     LLVM_DEBUG(llvm::dbgs() << "Generating SPMD dispatcher for " << num_ranks
                             << " ranks\n");

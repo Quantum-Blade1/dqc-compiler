@@ -1,8 +1,4 @@
-//===- DQCPasses.h - DQC Compiler Passes ---*- C++ -*-===//
-//
-// This file defines entry points for all DQC passes.
-//
-//===--------------------------------------------------===//
+// Pass entry points for all 4 phases
 
 #ifndef DQC_PASSES_H
 #define DQC_PASSES_H

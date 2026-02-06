@@ -1,11 +1,4 @@
-//===- GreedyReorderingPass.cpp - Gate Commutativity-Based Reordering ---*- C++ -*-===//
-//
-// This file implements the Greedy Reordering Pass, which reorders gates to
-// minimize the distribution cost by grouping local gates and clustering
-// global gates that share the same control qubit into 'gate packets'.
-//
-// Phase C: Commutativity-Based Reordering (Optimization Layer)
-//===--------------------------------------------------------------------------===//
+// Phase C: Reorder gates using commutativity to reduce e-bit cost
 
 #include "mlir/Pass/Pass.h"
 #include "mlir/IR/Walkers.h"
@@ -23,48 +16,38 @@
 
 namespace dqc {
 
-/// Gate commutativity rules: defines which gates can be reordered
+// Commutativity rules for gate reordering
 struct GateCommutativityRules {
-  /// Check if two operations can be commuted (reordered)
+  // Can two ops be reordered?
   static bool canCommute(mlir::Operation *op1, mlir::Operation *op2) {
-    // Extract operands
     auto ops1 = op1->getOperands();
     auto ops2 = op2->getOperands();
-    
-    // Simple rule: gates on disjoint qubits commute
     std::set<mlir::Value> qubits1(ops1.begin(), ops1.end());
     std::set<mlir::Value> qubits2(ops2.begin(), ops2.end());
-    
-    // Check for overlap
-    for (auto q : qubits1) {
-      if (qubits2.count(q) > 0) {
-        return false;  // Gates share a qubit, cannot commute
-      }
-    }
-    
-    return true;  // Disjoint qubits, can commute
+    for (auto q : qubits1)
+      if (qubits2.count(q) > 0) return false;
+    return true;
   }
   
-  /// Check if two gates are on the same control qubit
+  // Same control qubit?
   static bool shareControlQubit(mlir::Operation *op1, mlir::Operation *op2) {
     if (op1->getNumOperands() < 1 || op2->getNumOperands() < 1) {
       return false;
     }
     
-    // Simplified: assume first operand is control
+    // Assume first operand is control
     return op1->getOperand(0) == op2->getOperand(0);
   }
   
-  /// Check if a gate is local or distributed
+  // Is gate distributed?
   static bool isDistributedGate(mlir::Operation *op) {
-    // Placeholder: in real implementation, check against mapping table
-    // For now, check operation name
+    // Check operation name
     auto op_name = op->getName().getStringRef();
     return op_name.contains("telegate") || op_name.contains("cnot");
   }
 };
 
-/// Gate packet: multiple gates sharing the same control qubit
+// Gate packet with shared control
 struct OptimizedGatePacket {
   mlir::Value control_qubit;
   std::vector<mlir::Operation *> gates;
@@ -77,18 +60,18 @@ struct OptimizedGatePacket {
     gates.push_back(gate);
   }
   
-  /// Estimate e-bit consumption (distributed gates consume e-bits)
+  // Estimate e-bit cost
   int estimateEBitCost() const {
     if (!is_distributed) return 0;
-    return gates.size();  // Each distributed gate consumes 1 e-bit pair
+    return gates.size();
   }
 };
 
-/// Dependency graph node
+// Dependency graph node
 struct DependencyNode {
   mlir::Operation *op;
   std::vector<DependencyNode *> dependencies;
-  int depth;  // Topological depth in dependency graph
+  int depth;
   
   DependencyNode(mlir::Operation *operation)
       : op(operation), depth(0) {}
@@ -98,7 +81,7 @@ struct DependencyNode {
 
 namespace {
 
-/// Greedy Reordering Pass
+// Greedy reordering pass implementation
 class GreedyReorderingPass
     : public mlir::PassWrapper<GreedyReorderingPass,
                                mlir::OperationPass<mlir::func::FuncOp>> {
@@ -119,7 +102,7 @@ public:
       llvm::cl::init(0.3f)};
 
 private:
-  /// Build dependency graph from operation sequence
+  // Build dependency graph
   std::vector<dqc::DependencyNode> buildDependencyGraph(
       mlir::Block *block) {
     std::vector<dqc::DependencyNode> nodes;
@@ -127,7 +110,7 @@ private:
     
     // Create nodes for all operations
     block->walk([&](mlir::Operation *op) {
-      if (op == block->getParentOp()) return;  // Skip function wrapper
+      if (op == block->getParentOp()) return;
       op_to_idx[op] = nodes.size();
       nodes.emplace_back(op);
     });
